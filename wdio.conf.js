@@ -1,3 +1,7 @@
+const fs = require ('fs')
+const path = require('path')
+var downloadDir = path.join(__dirname, 'tempDownload')
+
 exports.config = {
     //
     // ====================
@@ -63,7 +67,11 @@ exports.config = {
                 '--headless',
                 '--disable-gpu',
                 '--window-size=1440,735'
-            ]
+            ],
+            prefs: {
+                'directory_upgrade': true,
+                'prompt_for_download': false,
+                'download.default_directory': downloadDir }
         }
     
         // maxInstances can get overwritten per capability. So if you have an in-house Selenium
@@ -112,7 +120,7 @@ exports.config = {
     baseUrl: 'http://localhost',
     //
     // Default timeout for all waitFor* commands.
-    waitforTimeout: 10000,
+    waitforTimeout: 60000,
     //
     // Default timeout in milliseconds for request
     // if browser driver or grid doesn't send response
@@ -173,8 +181,12 @@ exports.config = {
      * @param {Object} config wdio configuration object
      * @param {Array.<Object>} capabilities list of capabilities details
      */
-    // onPrepare: function (config, capabilities) {
-    // },
+     onPrepare: async () => {
+        if (!fs.existsSync(downloadDir)){
+          // if it doesn't exist, create it
+          fs.mkdirSync(downloadDir);
+      }
+      },
     /**
      * Gets executed before a worker process is spawned and can be used to initialise specific service
      * for that worker as well as modify runtime environments in an async fashion.
@@ -281,8 +293,9 @@ exports.config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      * @param {<Object>} results object containing test results
      */
-    // onComplete: function(exitCode, config, capabilities, results) {
-    // },
+     onComplete: async() => {
+        fs.rmdirSync(downloadDir, { recursive: true })
+        }
     /**
     * Gets executed when a refresh happens.
     * @param {String} oldSessionId session ID of the old session
